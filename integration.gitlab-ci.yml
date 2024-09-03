@@ -52,6 +52,7 @@ checkout:
 install_dependencies:
   stage: install
   script:
+    - npm cache clean --force  # Clear npm cache
     - npm install  # Clean install dependencies based on package-lock.json
   tags:
     - nest-run
@@ -72,7 +73,7 @@ build:
     - npm run build  # Run the build script defined in your package.json
   artifacts:
     paths:
-      - dist/  # Adjust this if your build output goes elsewhere
+      - .next/  # Adjust this if your build output goes elsewhere
   tags:
     - nest-run
   after_script:

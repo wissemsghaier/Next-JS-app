@@ -52,7 +52,6 @@ checkout:
 install_dependencies:
   stage: install
   script:
-    - npm cache clean --force  # Clear npm cache
     - npm install  # Clean install dependencies based on package-lock.json
   tags:
     - nest-run

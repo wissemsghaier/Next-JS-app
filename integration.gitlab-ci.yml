@@ -11,7 +11,7 @@ variables:
   ZIP_FILE_NAME: '${ARTIFACT_ID}-${COMMIT_ID}.zip'
   SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
 
-
+image: node:18-alpine
 stages:
   - checkout
   - install

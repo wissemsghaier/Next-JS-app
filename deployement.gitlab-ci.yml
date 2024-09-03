@@ -17,7 +17,7 @@ variables:
   NEXUS_REPOSITORY: "student-repository"
   NEXUS_CREDENTIALS: 'wissem:3FqNnJ6XzF'
 
-  GROUP_ID: "com.artificial.Next-JS"
+  GROUP_ID: "com.artificial.Nest-JS"
   ARTIFACT_ID: "artifact"
   IMAGE_NAME: 'my-app'
   

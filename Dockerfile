@@ -7,11 +7,16 @@ WORKDIR /app
 # Copy the package.json and package-lock.json files
 COPY package*.json ./
 
-# Install the dependencies
-RUN npm install
+
+
 
 # Copy the rest of the application code
-COPY . .
+ADD . .
+
+
+# Remove node_modules if it exists and install dependencies
+RUN rm -rf node_modules 
+RUN  npm install 
 
 # Build the Next.js application
 RUN npm run build

@@ -12,7 +12,6 @@ variables:
   SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
 
 
-
 stages:
   - checkout
   - install

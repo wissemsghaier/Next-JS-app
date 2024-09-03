@@ -1,0 +1,3 @@
+include:
+  - local: 'integration.gitlab-ci.yml'
+

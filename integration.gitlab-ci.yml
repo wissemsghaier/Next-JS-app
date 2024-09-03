@@ -1,0 +1,188 @@
+variables:
+  SONARQUBE_URL: 'https://sonarqube.u-cloudsolutions.xyz'
+  SONARQUBE_TOKEN: 'squ_b730e6c811798750f5442b5ec90950a58600c316'
+  SONARQUBE_PROJECT_KEY: 'nest-js-project'
+  SONARQUBE_PROJECT_NAME: 'nest-js-project'
+  NEXUS_CREDENTIALS_ID: "nexus-jenkins"
+  NEXUS_URL: "https://nexus.u-cloudsolutions.xyz"
+  NEXUS_REPOSITORY: "student-repository"
+  GROUP_ID: "com.artificial.Nest-JS"
+  ARTIFACT_ID: "artifact"
+  ZIP_FILE_NAME: '${ARTIFACT_ID}-${COMMIT_ID}.zip'
+  SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
+
+
+
+stages:
+  - checkout
+  - install
+  - build
+  - test
+  - quality
+  - quality_gate
+  - package
+  - upload
+
+.slack_notification:
+  script:
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+checkout:
+  stage: checkout
+  tags:
+    - nest-run
+  script:
+    - echo "Checking out the repository"
+    - git rev-parse --short HEAD > commit_hash.txt
+    - export COMMIT_ID=$(cat commit_hash.txt)
+    - export ZIP_FILE_NAME="${ARTIFACT_ID}-${COMMIT_ID}.zip"
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Checkout succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Checkout failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+install_dependencies:
+  stage: install
+  script:
+    - npm install  # Clean install dependencies based on package-lock.json
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Install dependencies succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Install dependencies failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+build:
+  stage: build
+  script:
+    - npm run build  # Run the build script defined in your package.json
+  artifacts:
+    paths:
+      - dist/  # Adjust this if your build output goes elsewhere
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Build succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Build failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+unit_tests:
+  stage: test
+  script:
+    - npm run test  # Run the test script defined in your package.json
+    - npm run test:e2e  # Optionally run end-to-end tests if defined
+  artifacts:
+    when: always
+    paths:
+      - test-results/  # Adjust this path if you have test result outputs
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Unit tests succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Unit tests failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+code_quality:
+  stage: quality
+  script:
+    - sonar-scanner \
+        -Dsonar.projectKey=$SONARQUBE_PROJECT_KEY \
+        -Dsonar.projectName=$SONARQUBE_PROJECT_NAME \
+        -Dsonar.host.url=$SONARQUBE_URL \
+        -Dsonar.login=$SONARQUBE_TOKEN
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Code quality analysis succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Code quality analysis failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+quality_gate:
+  stage: quality_gate
+  script:
+    - sonar-quality-gate-check \
+        -Dsonar.projectKey=$SONARQUBE_PROJECT_KEY \
+        -Dsonar.host.url=$SONARQUBE_URL \
+        -Dsonar.login=$SONARQUBE_TOKEN
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Quality gate check passed in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Quality gate check failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+package_artifact:
+  stage: package
+  script:
+    - zip -r $ZIP_FILE_NAME dist/
+  artifacts:
+    paths:
+      - $ZIP_FILE_NAME
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Packaging succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Packaging failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL
+
+upload_artifact_to_nexus:
+  stage: upload
+  script:
+    - curl -u $NEXUS_CREDENTIALS_ID -T $ZIP_FILE_NAME "$NEXUS_URL/repository/$NEXUS_REPOSITORY/$GROUP_ID/$ARTIFACT_ID/$COMMIT_ID/$ZIP_FILE_NAME"
+  tags:
+    - nest-run
+  after_script:
+    - |
+      if [ $? -eq 0 ]; then
+        SLACK_MESSAGE="Upload to Nexus succeeded in pipeline $CI_PIPELINE_ID"
+      else
+        SLACK_MESSAGE="Upload to Nexus failed in pipeline $CI_PIPELINE_ID"
+      fi
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"$SLACK_MESSAGE\"}" \
+        $SLACK_WEBHOOK_URL

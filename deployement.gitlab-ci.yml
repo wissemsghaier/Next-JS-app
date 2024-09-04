@@ -183,10 +183,12 @@ push_docker_image:
     - commitId=${COMMIT_ID}
     - docker_url="54.38.185.102:10001/repository/${NEXUS_DOCKER_REPOSITORY}"  # Correct the variable assignment
     - echo "Pushing Docker image to Nexus..."
-    - echo "3FqNnJ6XzF" | docker login 54.38.185.102:10001 --username wissem --password 3FqNnJ6XzF  # Use --password-stdin for security
+    - echo "3FqNnJ6XzF" | docker login 54.38.185.102:10001 --username wissem --password-stdin
+    # --password 3FqNnJ6XzF  # Use --password-stdin for security
     - docker tag ${IMAGE_NAME}:${commitId} ${docker_url}/${IMAGE_NAME}:${commitId}
     - docker push ${docker_url}/${IMAGE_NAME}:${commitId}
     - echo "Docker image ${IMAGE_NAME}:${commitId} pushed to Nexus repository."
+
   after_script:
     - |
       if [ $? -eq 0 ]; then

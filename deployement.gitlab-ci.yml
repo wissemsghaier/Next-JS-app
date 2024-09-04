@@ -208,6 +208,7 @@ push_docker_image:
 
 
 
+
 build_jmeter_image:
   stage: build_images_jmeter
   tags:

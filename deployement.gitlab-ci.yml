@@ -13,7 +13,7 @@ stages:
 variables:
 
   NEXUS_URL: "https://nexus.u-cloudsolutions.xyz"
-  NEXUS_DOCKER_REPOSITORY: "new-next-repository"
+  NEXUS_DOCKER_REPOSITORY: "next-js-repository"
   NEXUS_REPOSITORY: "student-repository"
   NEXUS_CREDENTIALS: 'wissem:3FqNnJ6XzF'
 

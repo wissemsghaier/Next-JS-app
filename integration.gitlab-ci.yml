@@ -7,7 +7,7 @@ variables:
   NEXUS_CREDENTIALS_ID: "nexus-jenkins"
   NEXUS_URL: "https://nexus.u-cloudsolutions.xyz"
   NEXUS_REPOSITORY: "student-repository"
-  GROUP_ID: "com.artificial.Nest-JS"
+  GROUP_ID: "com.artificial.Next-JS"
   ARTIFACT_ID: "artifact"
   ZIP_FILE_NAME: '${ARTIFACT_ID}-${COMMIT_ID}.zip'
   COMMIT_ID: $(git rev-parse --short HEAD)
